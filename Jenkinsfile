@@ -9,7 +9,7 @@
         // }
       stages {
  //dependencies installation
-        stage ("Install node dependencies") {
+        stage ("Install node-js dependencies") {
           steps {
             sh "npm install --no-audit"
             
