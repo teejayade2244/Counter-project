@@ -9,7 +9,7 @@
         // }
       stages {
  //dependencies installation
-        stage ("Install node dependencies") {
+        stage ("Install node-js dependencies") {
           steps {
             sh "npm install --no-audit"
             
@@ -18,17 +18,7 @@
 
 //dependencies scanning
         stage ("Dependency Check scanning") {
-          // parallel {
-            // stage ("NPM dependencies audit") {
-            //         steps {
-            //           sh '''
-            //             npm audit --audit-level=critical
-            //             echo $?
-            //           '''
-            //         }
-            //     }
-            stage ("OWASP Dependency Check") { 
-                    steps {
+     steps {
                       dependencyCheck additionalArguments: '''
                         --scan \'./\'
                         --out \'./\'
@@ -36,9 +26,7 @@
                         --prettyPrint''', odcInstallation: 'OWAPS-Depend-check'
                         dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
                     }
-                }
-            }
-        
+        }
 
 //unit testing
         stage ("Unit Testing stage") {
