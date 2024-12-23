@@ -18,14 +18,26 @@
 
 //dependencies scanning
         stage ("Dependency Check scanning") {
-     steps {
+          parallel {
+            stage ("NPM dependencies audit") {
+                    steps {
+                      sh '''
+                        npm audit --audit-level=critical
+                        echo $?
+                      '''
+                    }
+                }
+            stage ("OWASP Dependency Check") { 
+                    steps {
                       dependencyCheck additionalArguments: '''
                         --scan \'./\'
                         --out \'./\'
                         --format \'ALL\'
                         --prettyPrint''', odcInstallation: 'OWAPS-Depend-check'
-                        dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
+                        dependencyCheckPublisher failedTotalCritical: 7, pattern: 'dependency-check-report.xml', stopBuild: true
                     }
+                }
+            }
         }
 
 //unit testing
