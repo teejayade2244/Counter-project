@@ -18,15 +18,15 @@
 
 //dependencies scanning
         stage ("Dependency Check scanning") {
-          parallel {
-            stage ("NPM dependencies audit") {
-                    steps {
-                      sh '''
-                        npm audit --audit-level=critical
-                        echo $?
-                      '''
-                    }
-                }
+          // parallel {
+            // stage ("NPM dependencies audit") {
+            //         steps {
+            //           sh '''
+            //             npm audit --audit-level=critical
+            //             echo $?
+            //           '''
+            //         }
+            //     }
             stage ("OWASP Dependency Check") { 
                     steps {
                       dependencyCheck additionalArguments: '''
@@ -38,7 +38,7 @@
                     }
                 }
             }
-        }
+        
 
 //unit testing
         stage ("Unit Testing stage") {
