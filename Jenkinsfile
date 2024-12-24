@@ -34,7 +34,7 @@
                         --out \'./\'
                         --format \'ALL\'
                         --prettyPrint''', odcInstallation: 'OWAPS-Depend-check'
-                        dependencyCheckPublisher failedTotalCritical: 7, pattern: 'dependency-check-report.xml', stopBuild: true
+                        dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
                     }
                 }
             }
