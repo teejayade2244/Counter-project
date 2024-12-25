@@ -46,9 +46,10 @@
               // option { retry (2) }
               // sh 'echo MY_USERNAME - $MY_CREDENTIALS_USR'
               // sh 'echo MY_PASSWORD - $MY_CREDENTIALS_PSW'
-              withCredentials([usernamePassword(credentialsId: 'env_credentials', passwordVariable: 'MY_PASSWORD', usernameVariable: 'MY_USERNAME')]) {
-              sh "npm test"
-            }
+            //   withCredentials([usernamePassword(credentialsId: 'env_credentials', passwordVariable: 'MY_PASSWORD', usernameVariable: 'MY_USERNAME')]) {
+             
+            // }
+             sh "npm test"
           } 
        }
 
