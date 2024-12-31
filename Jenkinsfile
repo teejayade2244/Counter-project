@@ -8,7 +8,7 @@
         //   MY_CREDENTIALS = credentials ('env_credentials')
         // }
       stages {
- //dependencies installation
+//dependencies installation
         stage ("Install node-js dependencies") {
           steps {
             sh "npm install --no-audit"
@@ -114,3 +114,5 @@
 //         ])
 //     }
 // }
+
+
