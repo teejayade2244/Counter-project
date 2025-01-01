@@ -61,7 +61,7 @@
             sh '''
                 ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
                 -Dsonar.projectKey=Counter-project \
-                -Dsonar.sources=App.js \
+                -Dsonar.sources=app.js \
                 -Dsonar.host.url=http://172.20.10.11:9000 \
                 -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info
                 -Dsonar.token=sqp_2ea4f94629ada40c9b3f68ed1ead35dd54ac188a
