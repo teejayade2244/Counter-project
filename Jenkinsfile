@@ -104,7 +104,7 @@ pipeline {
            stage("Build docker image") {
               steps {
                 sh 'printenv'
-                sh 'docker build -t teejay4125/counter-prject:$GIT_COMMIT .' 
+                sh 'docker build -t teejay4125/counter-project:$GIT_COMMIT .' 
               }
         }
     }
