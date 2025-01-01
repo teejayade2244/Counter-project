@@ -64,7 +64,7 @@
                     sh '''
                         ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
                         -Dsonar.projectKey=Counter-project \
-                        -Dsonar.sources=. \
+                        -Dsonar.sources=App.js\
                         -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info     
                     '''
                   }
