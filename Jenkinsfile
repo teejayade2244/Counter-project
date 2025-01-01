@@ -3,10 +3,11 @@
         tools {
           nodejs "Nodejs-22-6-0"
         }
-        // environment {
-        //    this is for username:password joined together
-        //   MY_CREDENTIALS = credentials ('env_credentials')
-        // }
+        environment {
+           SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
+          //  this is for username:password joined together
+          // MY_CREDENTIALS = credentials ('env_credentials')
+        }
       stages {
 //dependencies installation
         stage ("Install node dependencies") {
@@ -53,20 +54,18 @@
           } 
        }
 
-        // stage ("Code coverage") {
-        //     steps {
-        //       catchError(buildResult: 'SUCCESS', message: 'opps There is an error it will be fixed in the next release', stageResult: 'UNSTABLE') {
-        //       sh '''
-        //           npm run coverage
-        //           echo $?
-        //       '''
-        //      }
-        //       publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'coverage/Icon-report', reportFiles: 'index.html', reportName: 'Code Coverage HTML Report', reportTitles: '', useWrapperFileDirectly: true])
-        //     }
-        // }
-// this archive all reports always regardless of the outcome of the pipeline build
-     
-  }
+// static testing and analysis with sonarqube
+        stage ("Static Testing and Analysis with SonarQube") {
+          steps {
+            sh '''
+                ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                -Dsonar.projectKey=Counter-project \
+                -Dsonar.sources= App.js \
+                -Dsonar.host.url=http://172.20.10.11:9000 \
+                -Dsonar.token=sqp_2ea4f94629ada40c9b3f68ed1ead35dd54ac188a
+            '''
+          }
+       }
       post {
           always {
               junit allowEmptyResults: true, stdioRetention: '', testResults: 'test-results.xml'
