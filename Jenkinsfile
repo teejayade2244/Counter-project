@@ -34,6 +34,7 @@
                       dependencyCheck additionalArguments: '''
                         --scan \'./\'
                         --out \'./\'
+                        --disableYarnAudit \
                         --format \'ALL\'
                         --prettyPrint''', odcInstallation: 'OWAPS-Depend-check'
                         dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
@@ -58,14 +59,18 @@
 // static testing and analysis with sonarqube
         stage ("Static Testing and Analysis with SonarQube") {
           steps {
-            sh '''
-                ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-                -Dsonar.projectKey=Counter-project \
-                -Dsonar.sources=app.js \
-                -Dsonar.host.url=http://172.20.10.11:9000 \
-                -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info
-                -Dsonar.token=sqp_2ea4f94629ada40c9b3f68ed1ead35dd54ac188a
-            '''
+            timeout(time: 5, unit: 'MINUTES') {
+                withSonarQubeEnv('sonarqube-server') {
+                    sh '''
+                        ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.projectKey=Counter-project \
+                        -Dsonar.sources=. \
+                        -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info     
+                    '''
+                  }
+                // Wait for SonarQube quality gate and fail if it's not OK
+                waitForQualityGate abortPipeline: true
+            }
           }
        }
     }
