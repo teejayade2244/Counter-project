@@ -66,15 +66,15 @@
             '''
           }
        }
+    }
       post {
-          always {
-              junit allowEmptyResults: true, stdioRetention: '', testResults: 'test-results.xml'
-              junit allowEmptyResults: true, stdioRetention: '', testResults: 'dependency-check-junit.xml'
-              publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'dependency-check-report.html', reportName: 'Dependency check HTML Report', reportTitles: '', useWrapperFileDirectly: true])
-          }
-      }
-}
-  
+            always {
+                junit allowEmptyResults: true, stdioRetention: '', testResults: 'test-results.xml'
+                junit allowEmptyResults: true, stdioRetention: '', testResults: 'dependency-check-junit.xml'
+                publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'dependency-check-report.html', reportName: 'Dependency check HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+            }
+        }
+  }
    // scan the package.json file which is at the root level
       // --scan \'./\'
   // print the output in all format 
