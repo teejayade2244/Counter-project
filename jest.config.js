@@ -8,4 +8,5 @@ module.exports = {
     testEnvironment: "jsdom",
     moduleFileExtensions: ["js", "jsx"],
     setupFilesAfterEnv: ["./src/setupTests.js"],
+    coverageReporters: ["lcov", "text"],
 }
