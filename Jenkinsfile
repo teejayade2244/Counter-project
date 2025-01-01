@@ -99,6 +99,14 @@ pipeline {
                 waitForQualityGate abortPipeline: true
             }
         }
+
+        //build docker image
+           stage("Build docker image") {
+              steps {
+                sh 'printenv'
+                sh 'docker build -t teejay4125/counter-prject:$GIT_COMMIT .' 
+              }
+        }
     }
 
     // post actions
