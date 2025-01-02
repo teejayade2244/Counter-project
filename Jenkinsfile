@@ -118,13 +118,13 @@ pipeline {
                 trivy image teejay4125/counter-project:$GIT_COMMIT \
                 --severity LOW,MEDIUM \
                 --exit-code 0 \
-                --quite \
+                --quiet \
                 --format json -o trivy-image-MEDIUM-results.json
 
                  trivy image teejay4125/counter-project:$GIT_COMMIT \
                 --severity CRITICAL \
                 --exit-code 1 \
-                --quite \
+                --quiet \
                 --format json -o trivy-image-CRITICAL-results.json
               '''
             }
