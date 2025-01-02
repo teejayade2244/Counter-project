@@ -105,7 +105,6 @@
                   publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'coverage/Icon-report', reportFiles: 'index.html', reportName: 'Code Coverage HTML Report', reportTitles: '', useWrapperFileDirectly: true])
               }
           }
-      
   }
    // scan the package.json file which is at the root level
       // --scan \'./\'
