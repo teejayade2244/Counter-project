@@ -163,6 +163,10 @@ pipeline {
 
         // deploy to AWS EC2
         stage("Deploy to AWS EC2") {
+        // only deploy when branch is from feature
+         when {
+            branch 'feature/*'
+         }
          steps { 
             script {
                 sshagent(['aws-ec2-instance-deploy']) {
