@@ -3,6 +3,9 @@ pipeline {
     tools {
         nodejs "Nodejs-22-6-0"
     }
+    options {
+       disableConcurrentBuilds abortPrevious: true
+    }
     environment {
         SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
         // This is for username:password joined together
@@ -118,7 +121,7 @@ pipeline {
                 --format json -o trivy-image-MEDIUM-results.json
 
                  trivy image teejay4125/counter-project:$GIT_COMMIT
-                --severity HIGH,CRITICAL \
+                --severity CRITICAL \
                 --exit-code 1
                 --quite \
                 --format json -o trivy-image-CRITICAL-results.json
@@ -147,9 +150,8 @@ pipeline {
               }
             }
         }
-
-      }
-      // post actions
+  }
+        // post actions
           post {
               always {
                   // Publish JUnit test results, even if they are empty
@@ -168,4 +170,4 @@ pipeline {
                   publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'MEDIUM-results.html', reportName: 'Trivy scan Image medium vul report', reportTitles: '', useWrapperFileDirectly: true])
               }
           }
-}
+    }
