@@ -178,7 +178,7 @@ pipeline {
                         echo "Container stopped and removed."
                     fi
                     echo "Pulling and running new container..."
-                    sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:$GIT_COMMIT
+                    sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:${GIT_COMMIT}
                     '
                     '''
                 }
