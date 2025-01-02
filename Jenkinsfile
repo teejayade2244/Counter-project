@@ -159,8 +159,29 @@ pipeline {
               sh 'docker push teejay4125/counter-project:$GIT_COMMIT'
             }
           }
-       }
-    }
+        }
+
+        // deploy to AWS EC2
+        stage("Deploy to AWS EC2") {
+         steps { 
+            script {
+                sshagent(['aws-ec2-instance-deploy']) {
+                    sh '''
+                    ssh -o "StrictHostKeyChecking=no" ubuntu@ip-172-31-21-219 '
+                    if docker ps -a | grep -i "counter-project"; then
+                        echo "Container found. Stopping and removing..."
+                        sudo docker stop "counter-project" && sudo docker rm "counter-project"
+                        echo "Container stopped and removed."
+                    fi
+                    echo "Pulling and running new container..."
+                    sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:$GIT_COMMIT
+                    '
+                    '''
+                }
+             }
+           }
+        }
+  }
     // post actions
         post {
           always {
