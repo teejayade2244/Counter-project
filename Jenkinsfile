@@ -169,19 +169,21 @@ pipeline {
          }
          steps { 
             script {
-                sshagent(['aws-ec2-instance-deploy']) {
               def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-            sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-208-24-225.compute-1.amazonaws.com '\
-                    if docker ps -a | grep -i "counter-project"; then \
-                        echo "Container found. Stopping and removing..." && \
-                        sudo docker stop "counter-project" && sudo docker rm "counter-project" && \
-                        echo "Container stopped and removed." \
-                    fi && \
-                    echo "Pulling and running new container..." && \
-                    sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:${GIT_COMMIT}'
-            '''
-                }
+        sshagent(['aws-ec2-instance-deploy']) {
+            sh """
+                ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-208-24-225.compute-1.amazonaws.com '
+                    if docker ps -a | grep -i "counter-project"; then
+                        echo "Container found. Stopping and removing..."
+                        sudo docker stop "counter-project" && sudo docker rm "counter-project"
+                        echo "Container stopped and removed."
+                    fi
+                    echo "Pulling and running new container..."
+                    echo "Using GIT_COMMIT: ${GIT_COMMIT}"
+                    sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:${GIT_COMMIT}
+                '
+            """
+        }
              }
            }
         }
