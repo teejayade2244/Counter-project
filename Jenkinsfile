@@ -148,7 +148,8 @@ pipeline {
             }
         }
 
-    // post actions
+      }
+      // post actions
           post {
               always {
                   // Publish JUnit test results, even if they are empty
@@ -167,5 +168,4 @@ pipeline {
                   publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'MEDIUM-results.html', reportName: 'Trivy scan Image medium vul report', reportTitles: '', useWrapperFileDirectly: true])
               }
           }
-      }
 }
