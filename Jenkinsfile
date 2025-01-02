@@ -104,25 +104,26 @@ pipeline {
         }
 
         //build docker image
-           stage("Build docker image") {
-              steps {
-                sh 'printenv'
-                sh 'docker build -t teejay4125/counter-project:$GIT_COMMIT .' 
-              }
+        stage("Build docker image") {
+          steps {
+            sh 'printenv'
+            sh 'docker build -t teejay4125/counter-project:$GIT_COMMIT .' 
+          }
         }
+
         // scan the image for vulnerabilities before pushing to resgistry
-          stage("Trivy Vulnerability scan") {
+        stage("Trivy Vulnerability scan") {
             steps {
               sh '''
-                trivy image teejay4125/counter-project:$GIT_COMMIT
+                trivy image teejay4125/counter-project:$GIT_COMMIT \
                 --severity LOW,MEDIUM \
-                --exit-code 0
+                --exit-code 0 \
                 --quite \
                 --format json -o trivy-image-MEDIUM-results.json
 
-                 trivy image teejay4125/counter-project:$GIT_COMMIT
+                 trivy image teejay4125/counter-project:$GIT_COMMIT \
                 --severity CRITICAL \
-                --exit-code 1
+                --exit-code 1 \
                 --quite \
                 --format json -o trivy-image-CRITICAL-results.json
               '''
@@ -150,7 +151,15 @@ pipeline {
               }
             }
         }
-  }
+
+        // push image to registry
+        stage("Push to registry") {
+          steps {
+            withDockerRegistry(credentialsId: 'Docker-details', url: "") {
+              sh 'docker push teejay4125/counter-project:$GIT_COMMIT'
+            }
+          }
+       }
         // post actions
           post {
               always {
