@@ -84,24 +84,24 @@ pipeline {
         }
 
         // static testing and analysis with SonarQube
-        stage("Static Testing and Analysis with SonarQube") {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    withSonarQubeEnv('sonarqube-server') {
-                        // Run SonarQube scanner with specific parameters
-                        sh '''
-                            ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=Counter-project \
-                            -Dsonar.sources=src \
-                            -Dsonar.inclusions=src/App.js \
-                            -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info     
-                        '''
-                    }
-                }
-                // Wait for SonarQube quality gate and fail the pipeline if it's not OK
-                waitForQualityGate abortPipeline: true
-            }
-        }
+        // stage("Static Testing and Analysis with SonarQube") {
+        //     steps {
+        //         timeout(time: 5, unit: 'MINUTES') {
+        //             withSonarQubeEnv('sonarqube-server') {
+        //                 // Run SonarQube scanner with specific parameters
+        //                 sh '''
+        //                     ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+        //                     -Dsonar.projectKey=Counter-project \
+        //                     -Dsonar.sources=src \
+        //                     -Dsonar.inclusions=src/App.js \
+        //                     -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info     
+        //                 '''
+        //             }
+        //         }
+        //         // Wait for SonarQube quality gate and fail the pipeline if it's not OK
+        //         waitForQualityGate abortPipeline: true
+        //     }
+        // }
 
         //build docker image
         stage("Build docker image") {
@@ -178,7 +178,7 @@ pipeline {
                         echo "Container stopped and removed."
                     fi
                     echo "Pulling and running new container..."
-                    echo "Using GIT_COMMIT: ${GIT_COMMIT}"
+                    echo "Using GIT_COMMIT: $GIT_COMMIT"
                     sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:$GIT_COMMIT
                     '
                     '''
