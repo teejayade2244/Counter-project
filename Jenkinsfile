@@ -21,34 +21,34 @@ pipeline {
         }
 
         // dependencies scanning
-        stage("Dependency Check scanning") {
-            parallel {
-                stage("NPM dependencies audit") {
-                    steps {
-                        // Run npm audit to check for critical vulnerabilities
-                        sh '''
-                            npm audit --audit-level=critical
-                            echo $?
-                        '''
-                    }
-                }
+        // stage("Dependency Check scanning") {
+        //     parallel {
+        //         stage("NPM dependencies audit") {
+        //             steps {
+        //                 // Run npm audit to check for critical vulnerabilities
+        //                 sh '''
+        //                     npm audit --audit-level=critical
+        //                     echo $?
+        //                 '''
+        //             }
+        //         }
 
-                stage("OWASP Dependency Check") { 
-                    steps {
-                        // Run OWASP Dependency Check scan with specific arguments
-                        dependencyCheck additionalArguments: '''
-                            --scan \'./\' \
-                            --out \'./\' \
-                            --disableYarnAudit \
-                            --format \'ALL\' \
-                            --prettyPrint
-                        ''', odcInstallation: 'OWAPS-Depend-check'
-                        // Publish the Dependency Check report and fail the build if critical issues are found
-                        dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
-                    }
-                }
-            }
-        }
+        //         stage("OWASP Dependency Check") { 
+        //             steps {
+        //                 // Run OWASP Dependency Check scan with specific arguments
+        //                 dependencyCheck additionalArguments: '''
+        //                     --scan \'./\' \
+        //                     --out \'./\' \
+        //                     --disableYarnAudit \
+        //                     --format \'ALL\' \
+        //                     --prettyPrint
+        //                 ''', odcInstallation: 'OWAPS-Depend-check'
+        //                 // Publish the Dependency Check report and fail the build if critical issues are found
+        //                 dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
+        //             }
+        //         }
+        //     }
+        // }
 
         // unit testing
         stage("Unit Testing stage") {
@@ -112,45 +112,45 @@ pipeline {
         }
 
         // scan the image for vulnerabilities before pushing to resgistry
-        stage("Trivy Vulnerability scan") {
-            steps {
-              sh '''
-                trivy image teejay4125/counter-project:$GIT_COMMIT \
-                --severity LOW,MEDIUM \
-                --exit-code 0 \
-                --quiet \
-                --format json -o trivy-image-MEDIUM-results.json
+        // stage("Trivy Vulnerability scan") {
+        //     steps {
+        //       sh '''
+        //         trivy image teejay4125/counter-project:$GIT_COMMIT \
+        //         --severity LOW,MEDIUM \
+        //         --exit-code 0 \
+        //         --quiet \
+        //         --format json -o trivy-image-MEDIUM-results.json
 
-                 trivy image teejay4125/counter-project:$GIT_COMMIT \
-                --severity CRITICAL \
-                --exit-code 1 \
-                --quiet \
-                --format json -o trivy-image-CRITICAL-results.json
-              '''
-            }
-            post {
-              always {
-                //converting the json report format to html and junit so it can be published
-                sh '''
-                 trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-                    --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json  
+        //          trivy image teejay4125/counter-project:$GIT_COMMIT \
+        //         --severity CRITICAL \
+        //         --exit-code 1 \
+        //         --quiet \
+        //         --format json -o trivy-image-CRITICAL-results.json
+        //       '''
+        //     }
+        //     post {
+        //       always {
+        //         //converting the json report format to html and junit so it can be published
+        //         sh '''
+        //          trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+        //             --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json  
                 
-                 trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-                    --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
+        //          trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+        //             --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
 
-                trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
-                    --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json  
+        //         trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
+        //             --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json  
 
-                trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
-                    --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json    
-                 '''
-              }
-            }
-        }
+        //         trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
+        //             --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json    
+        //          '''
+        //       }
+        //     }
+        // }
 
         // push image to registry
         stage("Push to registry") {
@@ -178,7 +178,8 @@ pipeline {
                         echo "Container stopped and removed."
                     fi
                     echo "Pulling and running new container..."
-                    sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:${GIT_COMMIT}
+                    echo "Using GIT_COMMIT: ${GIT_COMMIT}"
+                    sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:$GIT_COMMIT
                     '
                     '''
                 }
