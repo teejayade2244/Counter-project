@@ -107,7 +107,7 @@ pipeline {
         stage("Build docker image") {
           steps {
             sh 'printenv'
-            sh 'docker build -t teejay4125/counter-project:$GIT_COMMIT .' 
+            sh 'docker build -t teejay4125/counter-project:$BRANCH_NAME .' 
           }
         }
 
@@ -156,7 +156,7 @@ pipeline {
         stage("Push to registry") {
           steps {
             withDockerRegistry(credentialsId: 'Docker-details', url: "") {
-              sh 'docker push teejay4125/counter-project:$GIT_COMMIT'
+              sh 'docker push teejay4125/counter-project:$BRANCH_NAME'
             }
           }
         }
@@ -179,7 +179,7 @@ pipeline {
                     fi
                     echo "Pulling and running new container..."
                     echo "Using GIT_COMMIT: $GIT_COMMIT"
-                    sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:$GIT_COMMIT
+                    sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:$BRANCH_NAME
                     '
                     '''
                 }
