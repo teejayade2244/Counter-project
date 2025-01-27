@@ -7,7 +7,10 @@ pipeline {
        disableConcurrentBuilds abortPrevious: true
     }
     environment {
-        SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
+        IMAGE_MAME = "teejay4125/counter-project"
+        IMAGE_TAG = "${IMAGE_NAME}:${env.GIT_COMMIT}"
+        // EC2_IP_ADDRESS = credentials ('env_credentials')
+        // SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
         // This is for username:password joined together
         // MY_CREDENTIALS = credentials ('env_credentials')
     }
@@ -85,6 +88,9 @@ pipeline {
 
         // static testing and analysis with SonarQube
         stage("Static Testing and Analysis with SonarQube") {
+            environment {
+                    SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
+                }
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
                     withSonarQubeEnv('sonarqube-server') {
@@ -107,7 +113,7 @@ pipeline {
         stage("Build docker image") {
           steps {
             sh 'printenv'
-            sh 'docker build -t teejay4125/counter-project:$GIT_COMMIT .' 
+            sh 'docker build -t ${IMAGE_TAG} .' 
           }
         }
 
@@ -115,13 +121,13 @@ pipeline {
         stage("Trivy Vulnerability scan") {
             steps {
               sh '''
-                trivy image teejay4125/counter-project:$GIT_COMMIT \
+                trivy image ${IMAGE_TAG} \
                 --severity LOW,MEDIUM \
                 --exit-code 0 \
                 --quiet \
                 --format json -o trivy-image-MEDIUM-results.json
 
-                 trivy image teejay4125/counter-project:$GIT_COMMIT \
+                 trivy image ${IMAGE_TAG} \
                 --severity CRITICAL \
                 --exit-code 1 \
                 --quiet \
@@ -156,37 +162,37 @@ pipeline {
         stage("Push to registry") {
           steps {
             withDockerRegistry(credentialsId: 'Docker-details', url: "") {
-              sh 'docker push teejay4125/counter-project:$GIT_COMMIT'
+              sh 'docker push ${IMAGE_TAG}'
             }
           }
         }
 
         // deploy to AWS EC2
-        stage("Deploy to AWS EC2") {
-        // only deploy when branch is from feature
-         when {
-            branch 'feature/*'
-         }
-         steps { 
-            script {
-              def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                sshagent(['aws-ec2-instance-deploy']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@ec2-184-72-141-70.compute-1.amazonaws.com '
-                            if docker ps -a | grep -i "counter-project"; then
-                                echo "Container found. Stopping and removing..."
-                                sudo docker stop "counter-project" && sudo docker rm "counter-project"
-                                echo "Container stopped and removed."
-                            fi
-                            echo "Pulling and running new container..."
-                            echo "Using GIT_COMMIT: ${GIT_COMMIT}"
-                            sudo docker run -d --name counter-project -p 3000:3000 teejay4125/counter-project:${GIT_COMMIT}
-                        '
-                    """
-                }
-             }
-          }
-        }
+        // stage("Deploy to AWS EC2") {
+        // // only deploy when branch is from feature
+        //  when {
+        //     branch 'feature/*'
+        //  }
+        //  steps { 
+        //     script {
+        //       def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+        //         sshagent(['aws-ec2-instance-deploy']) {
+        //             sh """
+        //                 ssh -o StrictHostKeyChecking=no ubuntu@ec2-184-72-141-70.compute-1.amazonaws.com '
+        //                     if docker ps -a | grep -i "counter-project"; then
+        //                         echo "Container found. Stopping and removing..."
+        //                         sudo docker stop "counter-project" && sudo docker rm "counter-project"
+        //                         echo "Container stopped and removed."
+        //                     fi
+        //                     echo "Pulling and running new container..."
+        //                     echo "Using GIT_COMMIT: ${GIT_COMMIT}"
+        //                     sudo docker run -d --name counter-project -p 3000:3000 ${IMAGE_MAME}:${GIT_COMMIT}
+        //                 '
+        //             """
+        //         }
+        //      }
+        //   }
+        // }
    }
     // post actions
         post {
@@ -208,3 +214,4 @@ pipeline {
           }
        }
 }
+
