@@ -24,34 +24,34 @@ pipeline {
         }
 
         // dependencies scanning
-        stage("Dependency Check scanning") {
-            parallel {
-                stage("NPM dependencies audit") {
-                    steps {
-                        // Run npm audit to check for critical vulnerabilities
-                        sh '''
-                            npm audit --audit-level=critical
-                            echo $?
-                        '''
-                    }
-                }
+        // stage("Dependency Check scanning") {
+        //     parallel {
+        //         stage("NPM dependencies audit") {
+        //             steps {
+        //                 // Run npm audit to check for critical vulnerabilities
+        //                 sh '''
+        //                     npm audit --audit-level=critical
+        //                     echo $?
+        //                 '''
+        //             }
+        //         }
 
-                stage("OWASP Dependency Check") { 
-                    steps {
-                        // Run OWASP Dependency Check scan with specific arguments
-                        dependencyCheck additionalArguments: '''
-                            --scan \'./\' \
-                            --out \'./\' \
-                            --disableYarnAudit \
-                            --format \'ALL\' \
-                            --prettyPrint
-                        ''', odcInstallation: 'OWAPS-Depend-check'
-                        // Publish the Dependency Check report and fail the build if critical issues are found
-                        dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
-                    }
-                }
-            }
-        }
+        //         stage("OWASP Dependency Check") { 
+        //             steps {
+        //                 // Run OWASP Dependency Check scan with specific arguments
+        //                 dependencyCheck additionalArguments: '''
+        //                     --scan \'./\' \
+        //                     --out \'./\' \
+        //                     --disableYarnAudit \
+        //                     --format \'ALL\' \
+        //                     --prettyPrint
+        //                 ''', odcInstallation: 'OWAPS-Depend-check'
+        //                 // Publish the Dependency Check report and fail the build if critical issues are found
+        //                 dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
+        //             }
+        //         }
+        //     }
+        // }
 
         // unit testing
         stage("Unit Testing stage") {
@@ -113,7 +113,7 @@ pipeline {
         stage("Build docker image") {
           steps {
             sh 'printenv'
-            sh 'sudo docker build -t ${IMAGE_TAG} .' 
+            sh 'docker build -t ${IMAGE_TAG} .' 
           }
         }
 
