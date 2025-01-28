@@ -14,6 +14,9 @@ pipeline {
         // This is for username:password joined together
         // MY_CREDENTIALS = credentials ('env_credentials')
     }
+     triggers {
+        githubPush() // This enables GitHub webhook trigger
+    }
     stages {
         // dependencies installation
         stage("Install node-js dependencies") {
