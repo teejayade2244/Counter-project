@@ -16,7 +16,7 @@ pipeline {
     }
     stages {
         // dependencies installation
-        stage("Install node dependencies") {
+        stage("Install node-js dependencies") {
             steps {
                 // Install Node.js dependencies without auditing vulnerabilities
                 sh "npm install --no-audit"
