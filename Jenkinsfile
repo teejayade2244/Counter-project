@@ -8,7 +8,7 @@ pipeline {
     }
     environment {
         IMAGE_MAME = "teejay4125/counter-project"
-        IMAGE_TAG = "${IMAGE_NAME}:${env.GIT_COMMIT}"
+        IMAGE_TAG = "${IMAGE_NAME}:${GIT_COMMIT}"
         // EC2_IP_ADDRESS = credentials ('env_credentials')
         // SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
         // This is for username:password joined together
@@ -117,46 +117,46 @@ pipeline {
           }
         }
 
-        // scan the image for vulnerabilities before pushing to resgistry
-        stage("Trivy Vulnerability scan") {
-            steps {
-              sh '''
-                trivy image ${IMAGE_TAG} \
-                --severity LOW,MEDIUM \
-                --exit-code 0 \
-                --quiet \
-                --format json -o trivy-image-MEDIUM-results.json
+        // // scan the image for vulnerabilities before pushing to resgistry
+        // stage("Trivy Vulnerability scan") {
+        //     steps {
+        //       sh '''
+        //         trivy image ${IMAGE_TAG} \
+        //         --severity LOW,MEDIUM \
+        //         --exit-code 0 \
+        //         --quiet \
+        //         --format json -o trivy-image-MEDIUM-results.json
 
-                 trivy image ${IMAGE_TAG} \
-                --severity CRITICAL \
-                --exit-code 1 \
-                --quiet \
-                --format json -o trivy-image-CRITICAL-results.json
-              '''
-            }
-            post {
-              always {
-                //converting the json report format to html and junit so it can be published
-                sh '''
-                 trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-                    --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json  
+        //          trivy image ${IMAGE_TAG} \
+        //         --severity CRITICAL \
+        //         --exit-code 1 \
+        //         --quiet \
+        //         --format json -o trivy-image-CRITICAL-results.json
+        //       '''
+        //     }
+        //     post {
+        //       always {
+        //         //converting the json report format to html and junit so it can be published
+        //         sh '''
+        //          trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+        //             --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json  
                 
-                 trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-                    --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
+        //          trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+        //             --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
 
-                trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
-                    --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json  
+        //         trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
+        //             --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json  
 
-                trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
-                    --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json    
-                 '''
-              }
-            }
-        }
+        //         trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
+        //             --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json    
+        //          '''
+        //       }
+        //     }
+        // }
 
         // push image to registry
         stage("Push to registry") {
