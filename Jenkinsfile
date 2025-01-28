@@ -7,7 +7,7 @@ pipeline {
        disableConcurrentBuilds abortPrevious: true
     }
     environment {
-        IMAGE_MAME = "teejay4125/counter-project"
+        IMAGE_NAME = "teejay4125/counter-project"
         IMAGE_TAG = "${IMAGE_NAME}:${GIT_COMMIT}"
         // EC2_IP_ADDRESS = credentials ('env_credentials')
         // SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
