@@ -15,7 +15,7 @@ pipeline {
         // MY_CREDENTIALS = credentials ('env_credentials')
     }
      triggers {
-        githubPush() // This enables GitHub webhook trigger
+        githubPush() 
     }
     stages {
         // dependencies installation
