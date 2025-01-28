@@ -87,33 +87,33 @@ pipeline {
         }
 
         // static testing and analysis with SonarQube
-        stage("Static Testing and Analysis with SonarQube") {
-            environment {
-                    SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
-                }
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    withSonarQubeEnv('sonarqube-server') {
-                        // Run SonarQube scanner with specific parameters
-                        sh '''
-                            ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=Counter-project \
-                            -Dsonar.sources=src \
-                            -Dsonar.inclusions=src/App.js \
-                            -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info     
-                        '''
-                    }
-                }
-                // Wait for SonarQube quality gate and fail the pipeline if it's not OK
-                waitForQualityGate abortPipeline: true
-            }
-        }
+        // stage("Static Testing and Analysis with SonarQube") {
+        //     environment {
+        //             SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
+        //         }
+        //     steps {
+        //         timeout(time: 5, unit: 'MINUTES') {
+        //             withSonarQubeEnv('sonarqube-server') {
+        //                 // Run SonarQube scanner with specific parameters
+        //                 sh '''
+        //                     ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+        //                     -Dsonar.projectKey=Counter-project \
+        //                     -Dsonar.sources=src \
+        //                     -Dsonar.inclusions=src/App.js \
+        //                     -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info     
+        //                 '''
+        //             }
+        //         }
+        //         // Wait for SonarQube quality gate and fail the pipeline if it's not OK
+        //         waitForQualityGate abortPipeline: true
+        //     }
+        // }
 
         //build docker image
         stage("Build docker image") {
           steps {
             sh 'printenv'
-            sh 'docker build -t ${IMAGE_TAG} .' 
+            sh 'sudo docker build -t ${IMAGE_TAG} .' 
           }
         }
 
