@@ -7,8 +7,14 @@ pipeline {
        disableConcurrentBuilds abortPrevious: true
     }
     environment {
-        IMAGE_NAME = "teejay4125/counter-project"
-        IMAGE_TAG = "${IMAGE_NAME}:${GIT_COMMIT}"
+        AWS_REGION = credentials ('AWS-REGION')
+        ECR_REPO_NAME = 'counter-project'
+        AWS_ACCOUNT_ID = credentials ('AWS-account-id')
+        IMAGE_TAG = "${ECR_REPO_NAME}:${GIT_COMMIT}"
+        DOCKER_IMAGE_NAME = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_TAG}"
+        // IMAGE_NAME = "teejay4125/counter-project"
+        // IMAGE_TAG = "${IMAGE_NAME}:${GIT_COMMIT}"
+        
         // EC2_IP_ADDRESS = credentials ('AWS-EC2-IP-ADD')
         SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
         // This is for username:password joined together
@@ -69,24 +75,24 @@ pipeline {
         }
 
         // code coverage
-        // stage("Code coverage") {
-        //     // In this stage jest will generate a coverage report which will be used by SonarQube
-        //     // The -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info assumes a coverage file exists at the specified path. Ensure your build process generates this file beforehand. Otherwise, SonarQube will raise an error.
-        //     steps {
-        //         catchError(buildResult: 'SUCCESS', message: 'opps There is an error it will be fixed in the next release', stageResult: 'UNSTABLE') {
-        //             script {
-        //                 // Run coverage script and check the result status
-        //                 def coverageResult = sh(script: 'npm run coverage', returnStatus: true)
-        //                 echo "Coverage script exited with code: ${coverageResult}"
+        stage("Code coverage") {
+            // In this stage jest will generate a coverage report which will be used by SonarQube
+            // The -Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info assumes a coverage file exists at the specified path. Ensure your build process generates this file beforehand. Otherwise, SonarQube will raise an error.
+            steps {
+                catchError(buildResult: 'SUCCESS', message: 'opps There is an error it will be fixed in the next release', stageResult: 'UNSTABLE') {
+                    script {
+                        // Run coverage script and check the result status
+                        def coverageResult = sh(script: 'npm run coverage', returnStatus: true)
+                        echo "Coverage script exited with code: ${coverageResult}"
 
-        //                 // If the coverage generation fails, mark the build as failed
-        //                 if (coverageResult != 0) {
-        //                     error("Coverage report generation failed.")
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+                        // If the coverage generation fails, mark the build as failed
+                        if (coverageResult != 0) {
+                            error("Coverage report generation failed.")
+                        }
+                    }
+                }
+            }
+        }
 
         // static testing and analysis with SonarQube
         // stage("Static Testing and Analysis with SonarQube") {
@@ -112,62 +118,112 @@ pipeline {
         // }
 
         //build docker image
-        stage("Build docker image") {
-          steps {
-            sh 'printenv'
-            sh 'docker build -t ${IMAGE_TAG} .' 
-          }
-        }
-
-        // scan the image for vulnerabilities before pushing to resgistry
-        // stage("Trivy Vulnerability scan") {
-        //     steps {
-        //       sh '''
-        //         trivy image ${IMAGE_TAG} \
-        //         --severity LOW,MEDIUM \
-        //         --exit-code 0 \
-        //         --quiet \
-        //         --format json -o trivy-image-MEDIUM-results.json
-
-        //          trivy image ${IMAGE_TAG} \
-        //         --severity CRITICAL \
-        //         --exit-code 1 \
-        //         --quiet \
-        //         --format json -o trivy-image-CRITICAL-results.json
-        //       '''
-        //     }
-        //     post {
-        //       always {
-        //         //converting the json report format to html and junit so it can be published
-        //         sh '''
-        //          trivy convert \
-        //             --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-        //             --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json  
-                
-        //          trivy convert \
-        //             --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-        //             --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
-
-        //         trivy convert \
-        //             --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
-        //             --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json  
-
-        //         trivy convert \
-        //             --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
-        //             --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json    
-        //          '''
-        //       }
-        //     }
+        // stage("Build docker image") {
+        //   steps {
+        //     sh 'printenv'
+        //     sh 'docker build -t ${IMAGE_TAG} .' 
+        //   }
         // }
 
-        // push image to registry
-        stage("Push to registry") {
-          steps {
-            withDockerRegistry(credentialsId: 'Docker-details', url: "") {
-              sh 'docker push ${IMAGE_TAG}'
-            }
-          }
+        // login to ECR
+        stage("AWS ECR login") {
+              // authenticate with ECR so docker has Docker has permission to push images to AWS ECR
+              steps {
+                  script {
+                        // Get ECR login token and execute Docker login. AWSCLI is already configured with both the secret and access keys on the jankins agent 
+                        // this command retrieves a temporary authentication password for AWS ECR, and its passed as a stdin to docker 
+                        // this allows docker Logs into your AWS ECR repository using the temporary password.
+                        sh """
+                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                        """
+                  }
+              }
         }
+
+        // Build Docker image
+        stage("Build docker image") {
+              steps {
+                  script {
+                        // Build the Docker image
+                        sh """
+                            docker build -t ${IMAGE_TAG} .
+                        """
+                  } 
+              }
+        }
+
+       // Tag Docker Image
+        stage("Tag Docker Image") {
+            //creates another name (tag) for the image so it matches the AWS ECR format.
+              steps {
+                  script {
+                      sh "docker tag ${IMAGE_TAG} ${DOCKER_IMAGE_NAME}"
+                  }
+              }
+        }
+
+         // scan the image for vulnerabilities before pushing to resgistry
+        stage("Trivy Vulnerability scan") {
+            steps {
+              sh '''
+                trivy image ${DOCKER_IMAGE_NAME } \
+                --severity LOW,MEDIUM \
+                --exit-code 0 \
+                --quiet \
+                --format json -o trivy-image-MEDIUM-results.json
+
+                 trivy image ${DOCKER_IMAGE_NAME } \
+                --severity CRITICAL \
+                --exit-code 1 \
+                --quiet \
+                --format json -o trivy-image-CRITICAL-results.json
+              '''
+            }
+            post {
+              always {
+                //converting the json report format to html and junit so it can be published
+                sh '''
+                 trivy convert \
+                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+                    --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json  
+                
+                 trivy convert \
+                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+                    --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
+
+                trivy convert \
+                    --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
+                    --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json  
+
+                trivy convert \
+                    --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
+                    --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json    
+                 '''
+              }
+            }
+        }
+
+        // Push image to AWS ECR
+        stage("Push to AWS ECR") {
+            steps {
+               script {
+                    sh """
+                        docker push ${DOCKER_IMAGE_NAME}
+                    """
+                }
+            }
+        }
+
+      }
+       
+        // push image to registry
+        // stage("Push to registry") {
+        //   steps {
+        //     withDockerRegistry(credentialsId: 'Docker-details', url: "") {
+        //       sh 'docker push ${IMAGE_TAG}'
+        //     }
+        //   }
+        // }
 
         // deploy to AWS EC2
         // stage("Deploy to AWS EC2") {
@@ -196,8 +252,6 @@ pipeline {
         //   }
         // }
 
-     
-   }
     // post actions
         post {
           always {
