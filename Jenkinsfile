@@ -12,10 +12,12 @@ pipeline {
         AWS_ACCOUNT_ID = credentials ('AWS-account-id')
         IMAGE_TAG = "${ECR_REPO_NAME}:${GIT_COMMIT}"
         DOCKER_IMAGE_NAME = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_TAG}"
+        
+        
         // IMAGE_NAME = "teejay4125/counter-project"
         // IMAGE_TAG = "${IMAGE_NAME}:${GIT_COMMIT}"
         
-        EC2_IP_ADDRESS = credentials ('EC2-IP-ADDRESS')
+        // EC2_IP_ADDRESS = credentials ('EC2-IP-ADDRESS')
         // SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
         // This is for username:password joined together
         // MY_CREDENTIALS = credentials ('env_credentials')
@@ -23,7 +25,7 @@ pipeline {
     
     stages {
         // Dependencies installation
-        stage("Install node-js dependencies") {
+        stage("Install node dependencies") {
             steps {
                 // Install Node.js dependencies without auditing vulnerabilities
                 sh "npm install --no-audit"
@@ -32,34 +34,40 @@ pipeline {
         }
 
         // dependencies scanning
-        // stage("Dependency Check scanning") {
-        //     parallel {
-        //         stage("NPM dependencies audit") {
-        //             steps {
-        //                 // Run npm audit to check for critical vulnerabilities
-        //                 sh '''
-        //                     npm audit --audit-level=critical
-        //                     echo $?
-        //                 '''
-        //             }
-        //         }
+        stage("Dependency Check scanning") {
+            parallel {
+                stage("NPM dependencies audit") {
+                    steps {
+                        // Run npm audit to check for critical vulnerabilities
+                        sh '''
+                            npm audit --audit-level=critical
+                            echo $?
+                        '''
+                    }
+                }
 
-        //         stage("OWASP Dependency Check") { 
-        //             steps {
-        //                 // Run OWASP Dependency Check scan with specific arguments
-        //                 dependencyCheck additionalArguments: '''
-        //                     --scan \'./\' \
-        //                     --out \'./\' \
-        //                     --disableYarnAudit \
-        //                     --format \'ALL\' \
-        //                     --prettyPrint
-        //                 ''', odcInstallation: 'OWAPS-Depend-check'
-        //                 // Publish the Dependency Check report and fail the build if critical issues are found
-        //                 dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
-        //             }
-        //         }
-        //     }
-        // }
+                stage("OWASP Dependency Check") { 
+                    steps {
+                        sh 'mkdir -p ${WORKSPACE}/OWASP-security-reports'
+                        // Run OWASP Dependency Check scan with specific arguments
+                        withCredentials([string(credentialsId: 'NVD-API-KEY', variable: 'NVD_API_KEY')]) {
+                                dependencyCheck additionalArguments: """
+                                    --scan "${WORKSPACE}" \
+                                    --out "${WORKSPACE}/OWASP-security-reports" \
+                                    --disableYarnAudit \
+                                    --format "HTML,XML,JSON" \
+                                    --prettyPrint \
+                                    --nvdApiKey "${NVD_API_KEY}" \
+                                    --suppressionFile "${WORKSPACE}/dependency-check-suppressions.xml"
+                                """, odcInstallation: 'OWAPS-Depend-check'
+                         }
+                        
+                        // Publish the Dependency Check report and fail the build if critical issues are found
+                        dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
+                    }
+                }
+            }
+        }
 
         // unit testing
         stage("Unit Testing stage") {
@@ -227,35 +235,36 @@ pipeline {
         // }
 
          // deploy to AWS EC2
-        stage("Deploy to AWS EC2") {
-        // only deploy when branch is from feature
-         when {
-            branch 'feature/*'
-         }
-         steps { 
-            script {
-              def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                sshagent(['SSH-Private-Key']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP_ADDRESS} '
-                        # Log Docker into AWS ECR
-                        echo "Logging into AWS ECR..."
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                            if docker ps -a | grep -i "counter-project"; then
-                                echo "Container found. Stopping and removing..."
-                                sudo docker stop "counter-project" && sudo docker rm "counter-project"
-                                echo "Container stopped and removed."
-                            fi
-                            echo "Pulling and running new container..."
-                            echo "Using GIT_COMMIT: ${GIT_COMMIT}"
-                            sudo docker pull ${DOCKER_IMAGE_NAME}
-                            sudo docker ps
-                        '
-                    """
-                }
-             }
-          }
-        }
+        // stage("Deploy to AWS EC2") {
+        // // only deploy when branch is from feature
+        //  when {
+        //     branch 'feature/*'
+        //  }
+        //  steps { 
+        //     script {
+        //       def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+        //         sshagent(['SSH-Private-Key']) {
+        //             sh """
+        //                 ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP_ADDRESS} '
+        //                 # Log Docker into AWS ECR
+        //                 echo "Logging into AWS ECR..."
+        //                 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+        //                     if docker ps -a | grep -i "counter-project"; then
+        //                         echo "Container found. Stopping and removing..."
+        //                         sudo docker stop "counter-project" && sudo docker rm "counter-project"
+        //                         echo "Container stopped and removed."
+        //                     fi
+        //                     echo "Pulling and running new container..."
+        //                     echo "Using GIT_COMMIT: ${GIT_COMMIT}"
+        //                     sudo docker pull ${DOCKER_IMAGE_NAME}
+        //                     sudo docker run -d --name counter-project -p 3000:3000 ${DOCKER_IMAGE_NAME}
+        //                     sudo docker ps
+        //                 '
+        //             """
+        //         }
+        //      }
+        //   }
+        // }
     }
        
     // post actions
@@ -268,7 +277,7 @@ pipeline {
               junit allowEmptyResults: true, stdioRetention: '', testResults: 'trivy-image-MEDIUM-results.xml'   
               
               // Publish the Dependency Check HTML report
-              publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'dependency-check-report.html', reportName: 'Dependency check HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+              publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '${WORKSPACE}/OWASP-security-reports', reportFiles: 'dependency-check-report.html', reportName: 'Dependency check HTML Report', reportTitles: '', useWrapperFileDirectly: true])
               // Publish the Code Coverage HTML report
               publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'coverage/Icon-report', reportFiles: 'index.html', reportName: 'Code Coverage HTML Report', reportTitles: '', useWrapperFileDirectly: true])
 
