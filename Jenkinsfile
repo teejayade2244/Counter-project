@@ -248,7 +248,6 @@ pipeline {
                             fi
                             echo "Pulling and running new container..."
                             echo "Using GIT_COMMIT: ${GIT_COMMIT}"
-                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                             sudo docker pull ${DOCKER_IMAGE_NAME}
                             sudo docker run -d --name counter-project -p 3000:3000 ${DOCKER_IMAGE_NAME}
                             sudo docker ps
