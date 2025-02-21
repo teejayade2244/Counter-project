@@ -12,6 +12,8 @@ pipeline {
         AWS_ACCOUNT_ID = credentials ('AWS-account-id')
         IMAGE_TAG = "${ECR_REPO_NAME}:${GIT_COMMIT}"
         DOCKER_IMAGE_NAME = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_TAG}"
+        
+        
         // IMAGE_NAME = "teejay4125/counter-project"
         // IMAGE_TAG = "${IMAGE_NAME}:${GIT_COMMIT}"
         
@@ -46,14 +48,20 @@ pipeline {
 
                 stage("OWASP Dependency Check") { 
                     steps {
+                        sh 'mkdir -p ${WORKSPACE}/OWASP-security-reports'
                         // Run OWASP Dependency Check scan with specific arguments
-                        dependencyCheck additionalArguments: '''
-                            --scan \'./\' \
-                            --out \'./\' \
-                            --disableYarnAudit \
-                            --format \'ALL\' \
-                            --prettyPrint
-                        ''', odcInstallation: 'OWAPS-Depend-check'
+                        withCredentials([string(credentialsId: 'NVD-API-KEY', variable: 'NVD_API_KEY')]) {
+                                dependencyCheck additionalArguments: """
+                                    --scan "${WORKSPACE}" \
+                                    --out "${WORKSPACE}/OWASP-security-reports" \
+                                    --disableYarnAudit \
+                                    --format "HTML,XML,JSON" \
+                                    --prettyPrint \
+                                    --nvdApiKey "${NVD_API_KEY}" \
+                                    --suppressionFile "${WORKSPACE}/dependency-check-suppressions.xml"
+                                """, odcInstallation: 'OWAPS-Depend-check'
+                         }
+                        
                         // Publish the Dependency Check report and fail the build if critical issues are found
                         dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
                     }
@@ -269,7 +277,7 @@ pipeline {
               junit allowEmptyResults: true, stdioRetention: '', testResults: 'trivy-image-MEDIUM-results.xml'   
               
               // Publish the Dependency Check HTML report
-              publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'dependency-check-report.html', reportName: 'Dependency check HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+              publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '${WORKSPACE}/OWASP-security-reports', reportFiles: 'dependency-check-report.html', reportName: 'Dependency check HTML Report', reportTitles: '', useWrapperFileDirectly: true])
               // Publish the Code Coverage HTML report
               publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'coverage/Icon-report', reportFiles: 'index.html', reportName: 'Code Coverage HTML Report', reportTitles: '', useWrapperFileDirectly: true])
 
