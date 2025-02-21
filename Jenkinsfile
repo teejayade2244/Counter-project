@@ -235,7 +235,7 @@ pipeline {
          steps { 
             script {
               def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                sshagent(['aws-ec2-instance-deploy']) {
+                sshagent(['SSH-Private-Key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP_ADDRESS}.compute-1.amazonaws.com '
                             if docker ps -a | grep -i "counter-project"; then
@@ -245,7 +245,7 @@ pipeline {
                             fi
                             echo "Pulling and running new container..."
                             echo "Using GIT_COMMIT: ${GIT_COMMIT}"
-                            sudo docker run -d --name counter-project -p 3000:3000 ${IMAGE_MAME}:${GIT_COMMIT}
+                            sudo docker run -d --name counter-project -p 3000:3000 ${DOCKER_IMAGE_NAME}
                         '
                     """
                 }
