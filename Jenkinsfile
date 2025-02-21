@@ -61,7 +61,7 @@ pipeline {
                                 ''', odcInstallation: 'OWAPS-Depend-check'
                          }
                         // Publish the Dependency Check report and fail the build if critical issues are found
-                        dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
+                        dependencyCheckPublisher failedTotalCritical: 1, pattern: 'OWASP-security-reports/dependency-check-report.xml', stopBuild: true
                     }
                 }
             }
@@ -140,9 +140,9 @@ pipeline {
                         // Get ECR login token and execute Docker login. AWSCLI is already configured with both the secret and access keys on the jankins agent 
                         // this command retrieves a temporary authentication password for AWS ECR, and its passed as a stdin to docker 
                         // this allows docker Logs into your AWS ECR repository using the temporary password.
-                        sh """
+                        sh '''
                             aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                        """
+                        '''
                      }
                   }
                   
