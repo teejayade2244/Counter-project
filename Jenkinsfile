@@ -55,7 +55,7 @@ pipeline {
                                     --scan "${WORKSPACE}" \
                                     --out "${WORKSPACE}/OWASP-security-reports" \
                                     --disableYarnAudit \
-                                    --format "HTML,XML,JSON" \
+                                    --format "HTML, XML, JSON" \
                                     --prettyPrint \
                                     --nvdApiKey "${NVD_API_KEY}" \
                                     --suppression "${WORKSPACE}/dependency-check-suppressions.xml"
