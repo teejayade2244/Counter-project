@@ -58,7 +58,7 @@ pipeline {
                                     --format "HTML,XML,JSON" \
                                     --prettyPrint \
                                     --nvdApiKey "${NVD_API_KEY}" \
-                                    --suppressionFile "${WORKSPACE}/dependency-check-suppressions.xml"
+                                    --suppression "${WORKSPACE}/dependency-check-suppressions.xml"
                                 """, odcInstallation: 'OWAPS-Depend-check'
                          }
                         
