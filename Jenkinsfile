@@ -16,7 +16,7 @@ pipeline {
         // IMAGE_TAG = "${IMAGE_NAME}:${GIT_COMMIT}"
         
         EC2_IP_ADDRESS = credentials ('EC2-IP-ADDRESS')
-        SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
+        // SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
         // This is for username:password joined together
         // MY_CREDENTIALS = credentials ('env_credentials')
     }
