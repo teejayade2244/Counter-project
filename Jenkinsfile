@@ -48,20 +48,18 @@ pipeline {
 
                 stage("OWASP Dependency Check") { 
                     steps {
-                        sh 'mkdir -p ${WORKSPACE}/OWASP-security-reports'
+                        // sh 'mkdir -p ${WORKSPACE}/OWASP-security-reports'
                         // Run OWASP Dependency Check scan with specific arguments
                         withCredentials([string(credentialsId: 'NVD-API-KEY', variable: 'NVD_API_KEY')]) {
-                                dependencyCheck additionalArguments: """
+                                dependencyCheck additionalArguments: '''
                                     --scan "${WORKSPACE}" \
                                     --out "${WORKSPACE}/OWASP-security-reports" \
                                     --disableYarnAudit \
-                                    --format "HTML,XML,JSON" \
+                                    --format \'ALL\' \
                                     --prettyPrint \
-                                    --nvdApiKey "${NVD_API_KEY}" \
-                                    --suppressionFile "${WORKSPACE}/dependency-check-suppressions.xml"
-                                """, odcInstallation: 'OWAPS-Depend-check'
+                                    --nvdApiKey '${NVD_API_KEY}' \
+                                ''', odcInstallation: 'OWAPS-Depend-check'
                          }
-                        
                         // Publish the Dependency Check report and fail the build if critical issues are found
                         dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
                     }
@@ -281,9 +279,9 @@ pipeline {
               // Publish the Code Coverage HTML report
               publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'coverage/Icon-report', reportFiles: 'index.html', reportName: 'Code Coverage HTML Report', reportTitles: '', useWrapperFileDirectly: true])
 
-              publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'CRITICAL-results.html', reportName: 'Trivy scan Image critical vul report', reportTitles: '', useWrapperFileDirectly: true])
+              publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '${WORKSPACE}/Trivy-Image-Reports', reportFiles: 'CRITICAL-results.html', reportName: 'Trivy scan Image critical vul report', reportTitles: '', useWrapperFileDirectly: true])
 
-              publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'MEDIUM-results.html', reportName: 'Trivy scan Image medium vul report', reportTitles: '', useWrapperFileDirectly: true])
+              publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '${WORKSPACE}/Trivy-Image-Reports', reportFiles: 'MEDIUM-results.html', reportName: 'Trivy scan Image medium vul report', reportTitles: '', useWrapperFileDirectly: true])
           }
        }
 }
