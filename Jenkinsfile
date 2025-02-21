@@ -15,7 +15,7 @@ pipeline {
         // IMAGE_NAME = "teejay4125/counter-project"
         // IMAGE_TAG = "${IMAGE_NAME}:${GIT_COMMIT}"
         
-        // EC2_IP_ADDRESS = credentials ('AWS-EC2-IP-ADD')
+        EC2_IP_ADDRESS = credentials ('EC2-IP-ADDRESS')
         SONAR_SCANNER_HOME = tool 'sonarqube-scanner-6.1.0.477'
         // This is for username:password joined together
         // MY_CREDENTIALS = credentials ('env_credentials')
@@ -117,7 +117,7 @@ pipeline {
         //     }
         // }
 
-        //build docker image
+        // build docker image
         // stage("Build docker image") {
         //   steps {
         //     sh 'printenv'
@@ -214,8 +214,6 @@ pipeline {
             }
         }
 
-      }
-       
         // push image to registry
         // stage("Push to registry") {
         //   steps {
@@ -225,33 +223,34 @@ pipeline {
         //   }
         // }
 
-        // deploy to AWS EC2
-        // stage("Deploy to AWS EC2") {
+         // deploy to AWS EC2
+        stage("Deploy to AWS EC2") {
         // only deploy when branch is from feature
-        //  when {
-        //     branch 'feature/*'
-        //  }
-        //  steps { 
-        //     script {
-        //       def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-        //         sshagent(['aws-ec2-instance-deploy']) {
-        //             sh """
-        //                 ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP_ADDRESS.compute-1.amazonaws.com '
-        //                     if docker ps -a | grep -i "counter-project"; then
-        //                         echo "Container found. Stopping and removing..."
-        //                         sudo docker stop "counter-project" && sudo docker rm "counter-project"
-        //                         echo "Container stopped and removed."
-        //                     fi
-        //                     echo "Pulling and running new container..."
-        //                     echo "Using GIT_COMMIT: ${GIT_COMMIT}"
-        //                     sudo docker run -d --name counter-project -p 3000:3000 ${IMAGE_MAME}:${GIT_COMMIT}
-        //                 '
-        //             """
-        //         }
-        //      }
-        //   }
-        // }
-
+         when {
+            branch 'feature/*'
+         }
+         steps { 
+            script {
+              def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                sshagent(['aws-ec2-instance-deploy']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP_ADDRESS}.compute-1.amazonaws.com '
+                            if docker ps -a | grep -i "counter-project"; then
+                                echo "Container found. Stopping and removing..."
+                                sudo docker stop "counter-project" && sudo docker rm "counter-project"
+                                echo "Container stopped and removed."
+                            fi
+                            echo "Pulling and running new container..."
+                            echo "Using GIT_COMMIT: ${GIT_COMMIT}"
+                            sudo docker run -d --name counter-project -p 3000:3000 ${IMAGE_MAME}:${GIT_COMMIT}
+                        '
+                    """
+                }
+             }
+          }
+        }
+    }
+       
     // post actions
         post {
           always {
