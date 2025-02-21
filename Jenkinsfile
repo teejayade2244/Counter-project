@@ -23,7 +23,7 @@ pipeline {
     
     stages {
         // Dependencies installation
-        stage("Install node dependencies") {
+        stage("Install node-js dependencies") {
             steps {
                 // Install Node.js dependencies without auditing vulnerabilities
                 sh "npm install --no-audit"
@@ -169,13 +169,13 @@ pipeline {
         stage("Trivy Vulnerability scan") {
             steps {
               sh '''
-                trivy image ${DOCKER_IMAGE_NAME } \
+                trivy image ${DOCKER_IMAGE_NAME} \
                 --severity LOW,MEDIUM \
                 --exit-code 0 \
                 --quiet \
                 --format json -o trivy-image-MEDIUM-results.json
 
-                 trivy image ${DOCKER_IMAGE_NAME } \
+                 trivy image ${DOCKER_IMAGE_NAME} \
                 --severity CRITICAL \
                 --exit-code 1 \
                 --quiet \
