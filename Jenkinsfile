@@ -249,7 +249,7 @@ pipeline {
                             echo "Pulling and running new container..."
                             echo "Using GIT_COMMIT: ${GIT_COMMIT}"
                             sudo docker pull ${DOCKER_IMAGE_NAME}
-                            sudo docker run -d --name counter-project -p 3000:3000 ${DOCKER_IMAGE_NAME}
+                            sudo docker ps
                         '
                     """
                 }
