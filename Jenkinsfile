@@ -238,6 +238,9 @@ pipeline {
                 sshagent(['SSH-Private-Key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP_ADDRESS} '
+                        # Log Docker into AWS ECR
+                        echo "Logging into AWS ECR..."
+                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                             if docker ps -a | grep -i "counter-project"; then
                                 echo "Container found. Stopping and removing..."
                                 sudo docker stop "counter-project" && sudo docker rm "counter-project"
