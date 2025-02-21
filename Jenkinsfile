@@ -237,7 +237,7 @@ pipeline {
               def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
                 sshagent(['SSH-Private-Key']) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP_ADDRESS}.compute-1.amazonaws.com '
+                        ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP_ADDRESS} '
                             if docker ps -a | grep -i "counter-project"; then
                                 echo "Container found. Stopping and removing..."
                                 sudo docker stop "counter-project" && sudo docker rm "counter-project"
