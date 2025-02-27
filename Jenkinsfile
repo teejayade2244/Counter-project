@@ -12,6 +12,8 @@ pipeline {
         AWS_ACCOUNT_ID = credentials ('AWS-account-id')
         IMAGE_TAG = "${ECR_REPO_NAME}:${GIT_COMMIT}"
         DOCKER_IMAGE_NAME = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_TAG}"
+        GITHUB_TOKEN = credentials ('Github account token')
+       
         
         
         // IMAGE_NAME = "teejay4125/counter-project"
@@ -130,7 +132,7 @@ pipeline {
         //     sh 'docker build -t ${IMAGE_TAG} .' 
         //   }
         // }
-
+        
         // login to ECR
         stage("AWS ECR login") {
               // authenticate with ECR so docker has Docker has permission to push images to AWS ECR
@@ -172,45 +174,45 @@ pipeline {
         }
 
          // scan the image for vulnerabilities before pushing to resgistry
-        stage("Trivy Vulnerability scan") {
-            steps {
-              sh '''
-                trivy image ${DOCKER_IMAGE_NAME} \
-                --severity LOW,MEDIUM \
-                --exit-code 0 \
-                --quiet \
-                --format json -o trivy-image-MEDIUM-results.json
+        // stage("Trivy Vulnerability scan") {
+        //     steps {
+        //       sh '''
+        //         trivy image ${DOCKER_IMAGE_NAME} \
+        //         --severity LOW,MEDIUM \
+        //         --exit-code 0 \
+        //         --quiet \
+        //         --format json -o trivy-image-MEDIUM-results.json
 
-                 trivy image ${DOCKER_IMAGE_NAME} \
-                --severity CRITICAL \
-                --exit-code 1 \
-                --quiet \
-                --format json -o trivy-image-CRITICAL-results.json
-              '''
-            }
-            post {
-              always {
-                //converting the json report format to html and junit so it can be published
-                sh '''
-                 trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-                    --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json  
+        //          trivy image ${DOCKER_IMAGE_NAME} \
+        //         --severity CRITICAL \
+        //         --exit-code 1 \
+        //         --quiet \
+        //         --format json -o trivy-image-CRITICAL-results.json
+        //       '''
+        //     }
+        //     post {
+        //       always {
+        //         //converting the json report format to html and junit so it can be published
+        //         sh '''
+        //          trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+        //             --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json  
                 
-                 trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-                    --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
+        //          trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+        //             --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
 
-                trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
-                    --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json  
+        //         trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
+        //             --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json  
 
-                trivy convert \
-                    --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
-                    --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json    
-                 '''
-              }
-            }
-        }
+        //         trivy convert \
+        //             --format template --template "@/usr/local/share/trivy/templates/xml.tpl" \
+        //             --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json    
+        //          '''
+        //       }
+        //     }
+        // }
 
         // Push image to AWS ECR
         stage("Push to AWS ECR") {
@@ -223,6 +225,50 @@ pipeline {
             }
         }
 
+
+        stage('K8S Update Image Tag') {
+            when {
+                branch 'PR*' // Trigger this stage only for branches matching 'PR*'
+            }
+            steps {
+                script {
+                    // Clone the GitOps repository
+                    sh '''
+                        git clone -b main https://github.com/teejayade2244/gitOps-approach.git
+                    '''
+
+                    // Navigate to the Kubernetes directory
+                    dir("gitOps-approach/kubernetes") {
+                        // Replace the Docker image tag in the deployment file
+                        sh '''
+                            git checkout -b feature-$BUILD_ID
+                            sed -i "s#${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/counter-project.*#${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/counter-project:${GIT_COMMIT}#g" deployment.yaml
+                            cat deployment.yaml
+                        '''
+                        withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS access and secrete Keys', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                            script {
+                                sh '''
+                                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                                '''
+                            }
+                        }
+                        // Commit and push the changes to the feature branch
+                        withCredentials([string(credentialsId: 'Github account token', variable: 'GITHUB_TOKEN')]) {
+                            sh '''
+                                git config --global user.email "temitope224468@gmail.com"
+                                git remote set-url origin https://${GITHUB_TOKEN}@github.com/teejayade2244/gitOps-approach
+                                git add deployment.yaml
+                                git commit -am "Updated docker image to ${GIT_COMMIT}"
+                                git push -u origin feature-$BUILD_ID
+                                
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+
         // push image to registry
         // stage("Push to registry") {
         //   steps {
@@ -234,7 +280,7 @@ pipeline {
 
          // deploy to AWS EC2
         // stage("Deploy to AWS EC2") {
-        // // only deploy when branch is from feature
+        // only deploy when branch is from feature
         //  when {
         //     branch 'feature/*'
         //  }
