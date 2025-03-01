@@ -227,9 +227,9 @@ pipeline {
         stage("Push to AWS ECR") {
             steps {
                script {
-                    sh """
+                    sh '''
                         docker push ${DOCKER_IMAGE_NAME}
-                    """
+                    '''
                 }
             }
         }
@@ -243,7 +243,7 @@ pipeline {
                 script {
                     // Clone the GitOps repository
                     sh '''
-                        git clone -b main https://github.com/teejayade2244/gitOps-approach.git
+                        git clone -b master https://github.com/teejayade2244/gitOps-approach.git
                     '''
 
                     // Navigate to the Kubernetes directory
