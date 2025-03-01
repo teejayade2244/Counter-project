@@ -27,7 +27,7 @@ pipeline {
     
     stages {
         // Dependencies installation
-        stage("Install node dependencies") {
+        stage("Install node-js dependencies") {
             // steps {
             //     // Install Node.js dependencies without auditing vulnerabilities
             //     sh "npm install --no-audit"
@@ -268,7 +268,7 @@ pipeline {
                                 git config --global user.email "temitope224468@gmail.com"
                                 git remote set-url origin https://${GITHUB_TOKEN}@github.com/teejayade2244/gitOps-approach
                                 git add deployment.yaml
-                                git commit -am "Updated docker image to ${GIT_COMMIT}"
+                                git commit -m "Updated docker image to ${GIT_COMMIT}"
                                 git push -u origin feature-$BUILD_ID
                                 
                             '''
