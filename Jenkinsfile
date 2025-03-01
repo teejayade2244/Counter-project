@@ -247,9 +247,10 @@ pipeline {
                     '''
 
                     // Navigate to the Kubernetes directory
-                    dir("gitOps-approach/kubernetes") {
+                    dir("gitOps-approach/Kubernetes") {
                         // Replace the Docker image tag in the deployment file
                         sh '''
+                            ls -la
                             git checkout -b feature-$BUILD_ID
                             sed -i "s#${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/counter-project.*#${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/counter-project:${GIT_COMMIT}#g" deployment.yaml
                             cat deployment.yaml
@@ -324,8 +325,8 @@ pipeline {
         post {
           always {
               script {
-                if (fileExits("gitOps-approach/kubernetes")) {
-                sh 'rm -rf gitOps-approach/kubernetes'
+                if (fileExits("gitOps-approach")) {
+                sh 'rm -rf gitOps-approach'
                 }
              }
          
