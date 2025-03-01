@@ -325,10 +325,10 @@ pipeline {
         post {
           always {
               script {
-                if (fileExits("gitOps-approach")) {
-                sh 'rm -rf gitOps-approach'
-                }
-             }
+                 if (fileExists("gitOps-approach")) {
+                    sh 'rm -rf gitOps-approach'
+                 }
+            }
          
               // Publish JUnit test results, even if they are empty
               junit allowEmptyResults: true, stdioRetention: '', testResults: 'test-results.xml'
