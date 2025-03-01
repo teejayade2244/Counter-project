@@ -322,6 +322,12 @@ pipeline {
        
     // post actions
         post {
+          script {
+               if (fileExits("gitOps-approach/kubernetes")) {
+               sh 'rm -rf gitOps-approach/kubernetes'
+               }
+          }
+         
           always {
               // Publish JUnit test results, even if they are empty
               junit allowEmptyResults: true, stdioRetention: '', testResults: 'test-results.xml'
