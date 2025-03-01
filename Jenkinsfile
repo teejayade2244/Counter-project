@@ -252,7 +252,7 @@ pipeline {
                         sh '''
                             ls -la
                             git checkout -b feature-$BUILD_ID
-                            sed -i "s#${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/counter-project.*#${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/counter-project:${GIT_COMMIT}#g" deployment.yaml
+                            sed -i "s#${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/counter-project:.*#${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/counter-project:${GIT_COMMIT}#g" deployment.yaml
                             cat deployment.yaml
                         '''
                         withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS access and secrete Keys', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
