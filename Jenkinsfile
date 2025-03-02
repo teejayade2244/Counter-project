@@ -278,6 +278,28 @@ pipeline {
             }
         }
 
+        stage('GitHub - Raise PR') {
+            when {
+                branch 'feature/*'  // Runs when a feature branch is pushed
+            }
+            steps {
+                script {
+                    sh """
+                        curl -X POST 'https://api.github.com/repos/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/pulls' \\
+                        -H 'Authorization: token ${GITHUB_TOKEN}' \\
+                        -H 'Accept: application/vnd.github.v3+json' \\
+                        -H 'Content-Type: application/json' \\
+                        -d '{
+                            "title": "Updated Docker Image",
+                            "body": "Updated docker image in deployment manifest",
+                            "head": "feature-${env.BUILD_ID}",
+                            "base": "master",
+                            "assignees": ["teejayade2244"]
+                        }'
+                    """
+                }
+            }
+        }
 
         // push image to registry
         // stage("Push to registry") {
