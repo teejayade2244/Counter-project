@@ -281,12 +281,12 @@ pipeline {
 
         stage('GitHub - Raise PR') {
             when {
-                branch 'feature/*'  // Runs when a feature branch is pushed
+                branch 'PR*'  // Runs when a feature branch is pushed
             }
             steps {
                 script {
-                    sh """
-                        curl -X POST 'https://api.github.com/repos/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/pulls' \\
+                    sh '''
+                        curl -X POST 'https://api.github.com/repos/teejayade2244/gitOps-approach/pulls' \\
                         -H 'Authorization: token ${GITHUB_TOKEN}' \\
                         -H 'Accept: application/vnd.github.v3+json' \\
                         -H 'Content-Type: application/json' \\
@@ -297,7 +297,7 @@ pipeline {
                             "base": "master",
                             "assignees": ["teejayade2244"]
                         }'
-                    """
+                    '''
                 }
             }
         }
