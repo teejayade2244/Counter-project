@@ -285,19 +285,27 @@ pipeline {
             }
             steps {
                 script {
-                  sh '''
-                    curl -X POST https://api.github.com/repos/teejayade2244/gitOps-approach/pulls \
-                    -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    -H "Content-Type: application/json" \
-                    -d '{
-                        "title": "Updated Docker Image to ${GIT_COMMIT}",
-                        "body": "Updated Docker Image in deployment manifest",
-                        "head": "feature-${BUILD_ID}",
-                        "base": "master",
-                        "assignees": ["teejayade2244"]
-                    }'
-                '''
+                    try {
+                    // Attempt to create a PR
+                    sh '''
+                        curl -X POST https://api.github.com/repos/teejayade2244/gitOps-approach/pulls \
+                        -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        -H "Content-Type: application/json" \
+                        -d '{
+                            "title": "Updated Docker Image to '"${GIT_COMMIT}"'",
+                            "body": "Updated Docker Image in deployment manifest",
+                            "head": "feature-'"${BUILD_ID}"'",
+                            "base": "master",
+                            "assignees": ["teejayade2244"]
+                        }'
+                    '''
+                    } catch (Exception e) {
+                        // Handle the error
+                        echo "Failed to create PR: ${e}"
+                        // Optionally, fail the pipeline or take other actions
+                        currentBuild.result = 'FAILURE'
+                    }
                 }
             }
         }
