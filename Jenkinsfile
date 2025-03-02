@@ -27,7 +27,7 @@ pipeline {
     
     stages {
         // Dependencies installation
-        stage("Install node-js dependencies") {
+        stage("Install node dependencies") {
             // steps {
             //     // Install Node.js dependencies without auditing vulnerabilities
             //     sh "npm install --no-audit"
@@ -325,10 +325,10 @@ pipeline {
         post {
           always {
               script {
-                if (fileExits("gitOps-approach")) {
-                sh 'rm -rf gitOps-approach'
-                }
-             }
+                 if (fileExists("gitOps-approach")) {
+                    sh 'rm -rf gitOps-approach'
+                 }
+            }
          
               // Publish JUnit test results, even if they are empty
               junit allowEmptyResults: true, stdioRetention: '', testResults: 'test-results.xml'
